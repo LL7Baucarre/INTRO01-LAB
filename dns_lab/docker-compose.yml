@@ -1,0 +1,47 @@
+version: "3.8"
+
+services:
+  dns:
+    build: ./dns
+    container_name: technitium_dns
+    ports:
+      - "53:53/udp"
+      - "53:53/tcp"
+      - "5380:5380/tcp"
+    networks:
+      dns_net:
+        ipv4_address: 172.20.0.2
+    volumes:
+      - dns_config:/etc/dns/config
+      - dns_data:/var/lib/dns
+
+  client:
+    build: ./client
+    container_name: dns_client
+    networks:
+      dns_net:
+        ipv4_address: 172.20.0.3
+    depends_on:
+      - dns
+
+  web:
+    build: ./web
+    container_name: web_server
+    networks:
+      dns_net:
+        ipv4_address: 172.20.0.4
+    depends_on:
+      - dns
+    ports:
+      - "8080:80"
+
+networks:
+  dns_net:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16
+
+volumes:
+  dns_config:
+  dns_data:
